@@ -19,7 +19,7 @@ const FAQ = () => {
     },
     {
       question: 'Berapa lama durasi pengerjaan project?',
-      answer: 'Durasi tergantung kompleksitas project. Web sederhana: 1-2 minggu, Mobile app: 2-4 minggu, Project skripsi: 1-3 bulan. Timeline akan didiskusikan detail saat meeting awal dan tertulis dalam kontrak.'
+      answer: 'Durasi tergantung kompleksitas project. Web sederhana: 1-4 hari, Mobile app: 1-4 minggu, Project skripsi: 2-6 minggu. Timeline akan didiskusikan detail saat meeting awal dan dibuat tertulis.'
     },
     {
       question: 'Apakah benar revisi gratis?',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Clock, Award, RotateCcw, Shield } from 'lucide-react';
+import { DollarSign, Clock, Award, RotateCcw, Shield, TrendingUp } from 'lucide-react';
 
 const WhyUs = () => {
   const advantages = [
@@ -20,6 +20,12 @@ const WhyUs = () => {
       title: 'Kualitas Presentasi',
       description: 'Bantuan pengajaran materi presentasi dan ujian skripsi untuk hasil maksimal.',
       highlight: 'Ujian Terbantu'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Track Record Terpercaya',
+      description: 'Sejak 2022 sudah menangani 1000+ project dengan tingkat kepuasan klien yang tinggi.',
+      highlight: '1000+ Project'
     },
     {
       icon: RotateCcw,

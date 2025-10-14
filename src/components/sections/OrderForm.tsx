@@ -28,14 +28,11 @@ const OrderForm = () => {
   const platforms = ["Android", "Web", "Desktop", "Others"];
 
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error when user starts typing
     if (errors[name as keyof FormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -76,7 +73,7 @@ const OrderForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -90,59 +87,45 @@ const OrderForm = () => {
 
     setIsSubmitting(true);
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Create WhatsApp message
-      const message = `Halo JokiPremium! Saya ingin konsultasi project:
+    const message = `Halo JokiPremium! Saya ingin konsultasi project:
 
 *Data Pemesanan*
-• Nama: ${formData.name}
-• Phone: ${formData.phone}
-• Email: ${formData.email}
-• Gender: ${formData.gender}
-• Platform: ${formData.platforms.join(", ")}
+- Nama: ${formData.name}
+- Phone: ${formData.phone}
+- Email: ${formData.email}
+- Gender: ${formData.gender}
+- Platform: ${formData.platforms.join(", ")}
 
 *Deskripsi Project:*
 ${formData.description}
 
 Mohon info lebih lanjut mengenai timeline dan biaya. Terima kasih!`;
 
-      const whatsappUrl = `https://wa.me/6285173471146?text=${encodeURIComponent(
-        message
-      )}`;
+    const whatsappUrl = `https://wa.me/6285173471146?text=${encodeURIComponent(
+      message
+    )}`;
 
-      // Show success message
-      toast({
-        title: "Form berhasil dikirim!",
-        description:
-          "Anda akan diarahkan ke WhatsApp untuk melanjutkan konsultasi.",
-      });
+    toast({
+      title: "Mengarahkan ke WhatsApp...",
+      description: "Silakan lanjutkan konsultasi di WhatsApp",
+    });
 
-      // Redirect to WhatsApp after a short delay
-      setTimeout(() => {
-        window.open(whatsappUrl, "_blank");
-      }, 1500);
+    setTimeout(() => {
+      window.location.href = whatsappUrl;
+    }, 300);
 
-      // Reset form
-      setFormData({
-        name: "",
-        phone: "",
-        email: "",
-        gender: "",
-        platforms: [],
-        description: "",
-      });
-    } catch (error) {
-      toast({
-        title: "Terjadi kesalahan",
-        description: "Mohon coba lagi atau hubungi kami langsung via WhatsApp.",
-        variant: "destructive",
-      });
-    } finally {
+    setFormData({
+      name: "",
+      phone: "",
+      email: "",
+      gender: "",
+      platforms: [],
+      description: "",
+    });
+
+    setTimeout(() => {
       setIsSubmitting(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -165,7 +148,6 @@ Mohon info lebih lanjut mengenai timeline dan biaya. Terima kasih!`;
             onSubmit={handleSubmit}
             className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-8 animate-fade-up animation-delay-300"
           >
-            {/* Name */}
             <div className="mb-6">
               <label
                 htmlFor="name"
@@ -189,7 +171,6 @@ Mohon info lebih lanjut mengenai timeline dan biaya. Terima kasih!`;
               )}
             </div>
 
-            {/* Phone & Email */}
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label
@@ -246,7 +227,6 @@ Mohon info lebih lanjut mengenai timeline dan biaya. Terima kasih!`;
               </div>
             </div>
 
-            {/* Gender */}
             <div className="mb-6">
               <label
                 htmlFor="gender"
@@ -268,14 +248,12 @@ Mohon info lebih lanjut mengenai timeline dan biaya. Terima kasih!`;
                 <option value="">Pilih gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
-                <option value="Prefer not to say">Prefer not to say</option>
               </select>
               {errors.gender && (
                 <p className="text-destructive text-sm mt-1">{errors.gender}</p>
               )}
             </div>
 
-            {/* Platform */}
             <div className="mb-6">
               <label className="block text-sm font-semibold text-foreground mb-3">
                 Platform yang Dibutuhkan *
@@ -301,7 +279,6 @@ Mohon info lebih lanjut mengenai timeline dan biaya. Terima kasih!`;
               )}
             </div>
 
-            {/* Description */}
             <div className="mb-8">
               <label
                 htmlFor="description"
@@ -335,7 +312,6 @@ Mohon info lebih lanjut mengenai timeline dan biaya. Terima kasih!`;
               </div>
             </div>
 
-            {/* Submit Button */}
             <Button
               type="submit"
               disabled={isSubmitting}
