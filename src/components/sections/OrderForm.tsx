@@ -73,7 +73,7 @@ const OrderForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -87,7 +87,23 @@ const OrderForm = () => {
 
     setIsSubmitting(true);
 
-    const message = `Halo JokiPremium! Saya ingin konsultasi project:
+    try {
+      // Save to Supabase first
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error: dbError } = await supabase.from('orders').insert({
+        full_name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        gender: formData.gender,
+        platforms: formData.platforms,
+        description: formData.description,
+      });
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      const message = `Halo JokiPremium! Saya ingin konsultasi project:
 
 *Data Pemesanan*
 - Nama: ${formData.name}
@@ -101,31 +117,38 @@ ${formData.description}
 
 Mohon info lebih lanjut mengenai timeline dan biaya. Terima kasih!`;
 
-    const whatsappUrl = `https://wa.me/6285173471146?text=${encodeURIComponent(
-      message
-    )}`;
+      const whatsappUrl = `https://wa.me/6285173471146?text=${encodeURIComponent(
+        message
+      )}`;
 
-    toast({
-      title: "Mengarahkan ke WhatsApp...",
-      description: "Silakan lanjutkan konsultasi di WhatsApp",
-    });
+      toast({
+        title: "Mengarahkan ke WhatsApp...",
+        description: "Silakan lanjutkan konsultasi di WhatsApp",
+      });
 
-    setTimeout(() => {
-      window.location.href = whatsappUrl;
-    }, 300);
+      setTimeout(() => {
+        window.location.href = whatsappUrl;
+      }, 300);
 
-    setFormData({
-      name: "",
-      phone: "",
-      email: "",
-      gender: "",
-      platforms: [],
-      description: "",
-    });
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-    }, 1000);
+      setFormData({
+        name: "",
+        phone: "",
+        email: "",
+        gender: "",
+        platforms: [],
+        description: "",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit order",
+        variant: "destructive",
+      });
+    } finally {
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 1000);
+    }
   };
 
   return (
