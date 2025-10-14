@@ -253,7 +253,7 @@ Mohon info lebih lanjut mengenai timeline dan biaya. Terima kasih!`;
                 <p className="text-destructive text-sm mt-1">{errors.gender}</p>
               )}
             </div>
-
+              
             <div className="mb-6">
               <label className="block text-sm font-semibold text-foreground mb-3">
                 Platform yang Dibutuhkan *
