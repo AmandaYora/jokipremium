@@ -1,1 +1,4 @@
 project_id = "iuncnthcxlbbggzoixwq"
+
+[functions.analytics-collect]
+verify_jwt = false

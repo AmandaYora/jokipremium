@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Navbar from '../components/ui/navbar';
 import Hero from '../components/sections/Hero';
 import Services from '../components/sections/Services';
@@ -7,8 +7,35 @@ import WhyUs from '../components/sections/WhyUs';
 import FAQ from '../components/sections/FAQ';
 import OrderForm from '../components/sections/OrderForm';
 import Footer from '../components/sections/Footer';
+import { usePageviewTracking, useSectionFocusTracking } from '../hooks/useAnalytics';
 
 const Landing = () => {
+  // Analytics tracking
+  usePageviewTracking();
+  
+  const heroRef = useRef<HTMLElement>(null);
+  const servicesRef = useRef<HTMLElement>(null);
+  const flowRef = useRef<HTMLElement>(null);
+  const whyUsRef = useRef<HTMLElement>(null);
+  const faqRef = useRef<HTMLElement>(null);
+  const orderFormRef = useRef<HTMLElement>(null);
+
+  const attachHero = useSectionFocusTracking('hero');
+  const attachServices = useSectionFocusTracking('services');
+  const attachFlow = useSectionFocusTracking('flow');
+  const attachWhyUs = useSectionFocusTracking('whyus');
+  const attachFaq = useSectionFocusTracking('faq');
+  const attachOrderForm = useSectionFocusTracking('orderform');
+
+  useEffect(() => {
+    attachHero(heroRef.current);
+    attachServices(servicesRef.current);
+    attachFlow(flowRef.current);
+    attachWhyUs(whyUsRef.current);
+    attachFaq(faqRef.current);
+    attachOrderForm(orderFormRef.current);
+  }, [attachHero, attachServices, attachFlow, attachWhyUs, attachFaq, attachOrderForm]);
+
   useEffect(() => {
     // Set document title and meta tags
     document.title = 'JokiPremium - Jasa Pembuatan Aplikasi & Bimbingan Skripsi | Web, Mobile, Desktop';
@@ -128,12 +155,12 @@ const Landing = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main>
-        <Hero />
-        <Services />
-        <Flow />
-        <WhyUs />
-        <FAQ />
-        <OrderForm />
+        <section ref={heroRef}><Hero /></section>
+        <section ref={servicesRef}><Services /></section>
+        <section ref={flowRef}><Flow /></section>
+        <section ref={whyUsRef}><WhyUs /></section>
+        <section ref={faqRef}><FAQ /></section>
+        <section ref={orderFormRef}><OrderForm /></section>
       </main>
       <Footer />
     </div>

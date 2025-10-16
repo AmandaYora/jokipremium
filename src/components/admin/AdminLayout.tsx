@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  BarChart3
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -50,6 +51,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: ShoppingCart, label: 'Orders', path: '/admin/orders' },
+    { icon: BarChart3, label: 'Tracking', path: '/admin/tracking' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 
