@@ -18,10 +18,22 @@ async function getIPLocation(ip: string): Promise<LocationData> {
   const provider = Deno.env.get('IP_GEO_PROVIDER') || '';
   const apiKey = Deno.env.get('IP_GEO_API_KEY') || '';
   
+  console.log(`[IP Geolocation] Provider: ${provider || 'free fallback'}, IP: ${ip}`);
+  
   try {
-    if (provider === 'ipapi' && apiKey) {
-      const response = await fetch(`https://ipapi.co/${ip}/json/?key=${apiKey}`);
+    // ipdata.co provider
+    if (provider === 'ipdata' && apiKey) {
+      const response = await fetch(`https://api.ipdata.co/${ip}?api-key=${apiKey}`);
+      if (!response.ok) {
+        throw new Error(`ipdata API error: ${response.status}`);
+      }
       const data = await response.json();
+      console.log('[IP Geolocation] ipdata.co result:', { 
+        country: data.country_name, 
+        city: data.city,
+        latitude: data.latitude,
+        longitude: data.longitude 
+      });
       return {
         country: data.country_name,
         region: data.region,
@@ -29,9 +41,39 @@ async function getIPLocation(ip: string): Promise<LocationData> {
         latitude: data.latitude,
         longitude: data.longitude,
       };
-    } else if (provider === 'ipgeolocation' && apiKey) {
-      const response = await fetch(`https://api.ipgeolocation.io/ipgeo?apiKey=${apiKey}&ip=${ip}`);
+    }
+    
+    // ipapi.co provider (paid)
+    if (provider === 'ipapi' && apiKey) {
+      const response = await fetch(`https://ipapi.co/${ip}/json/?key=${apiKey}`);
+      if (!response.ok) {
+        throw new Error(`ipapi.co API error: ${response.status}`);
+      }
       const data = await response.json();
+      console.log('[IP Geolocation] ipapi.co result:', { 
+        country: data.country_name, 
+        city: data.city 
+      });
+      return {
+        country: data.country_name,
+        region: data.region,
+        city: data.city,
+        latitude: data.latitude,
+        longitude: data.longitude,
+      };
+    }
+    
+    // ipgeolocation.io provider
+    if (provider === 'ipgeolocation' && apiKey) {
+      const response = await fetch(`https://api.ipgeolocation.io/ipgeo?apiKey=${apiKey}&ip=${ip}`);
+      if (!response.ok) {
+        throw new Error(`ipgeolocation.io API error: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('[IP Geolocation] ipgeolocation.io result:', { 
+        country: data.country_name, 
+        city: data.city 
+      });
       return {
         country: data.country_name,
         region: data.state_prov,
@@ -42,8 +84,16 @@ async function getIPLocation(ip: string): Promise<LocationData> {
     }
     
     // Fallback to free ipapi.co without key
+    console.log('[IP Geolocation] Using free ipapi.co fallback');
     const response = await fetch(`https://ipapi.co/${ip}/json/`);
+    if (!response.ok) {
+      throw new Error(`Free ipapi.co error: ${response.status}`);
+    }
     const data = await response.json();
+    console.log('[IP Geolocation] Free fallback result:', { 
+      country: data.country_name, 
+      city: data.city 
+    });
     return {
       country: data.country_name || 'Unknown',
       region: data.region || 'Unknown',
@@ -52,7 +102,7 @@ async function getIPLocation(ip: string): Promise<LocationData> {
       longitude: data.longitude || 0,
     };
   } catch (error) {
-    console.error('IP geolocation error:', error);
+    console.error('[IP Geolocation] Error:', error);
     return {
       country: 'Unknown',
       region: 'Unknown',
@@ -92,15 +142,19 @@ serve(async (req) => {
   }
 
   try {
-    // Verify analytics key
+    // Verify analytics key (if configured)
     const analyticsKey = req.headers.get('x-analytics-key');
     const expectedKey = Deno.env.get('ANALYTICS_KEY');
-    if (!analyticsKey || analyticsKey !== expectedKey) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    
+    if (expectedKey && analyticsKey !== expectedKey) {
+      console.error('[Analytics] Unauthorized: Invalid or missing analytics key');
+      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid analytics key' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    
+    console.log('[Analytics] Request authorized');
 
     // Initialize Supabase client with service role
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -120,6 +174,8 @@ serve(async (req) => {
 
     const payload = await req.json();
     const { type, mode, lat, lon, accuracy, path, referrer, utm_source, utm_medium, utm_campaign, section_id, delta_ms } = payload;
+    
+    console.log(`[Analytics] Event type: ${type}, path: ${path || 'N/A'}, section: ${section_id || 'N/A'}`);
 
     let locationData: LocationData;
     let isPrecise = false;
@@ -173,10 +229,11 @@ serve(async (req) => {
         .single();
 
       if (sessionError) {
-        console.error('Session insert error:', sessionError);
+        console.error('[Analytics] Session insert error:', sessionError);
         throw sessionError;
       }
       sessionId = newSession.id;
+      console.log(`[Analytics] Created new session: ${sessionId}`);
     }
 
     // Handle pageview event
@@ -195,9 +252,10 @@ serve(async (req) => {
         });
 
       if (pageviewError) {
-        console.error('Pageview insert error:', pageviewError);
+        console.error('[Analytics] Pageview insert error:', pageviewError);
         throw pageviewError;
       }
+      console.log(`[Analytics] Pageview recorded: ${path}`);
     }
 
     // Handle section_focus event
@@ -226,9 +284,10 @@ serve(async (req) => {
           .eq('focus_date', focusDate);
 
         if (updateError) {
-          console.error('Section focus update error:', updateError);
+          console.error('[Analytics] Section focus update error:', updateError);
           throw updateError;
         }
+        console.log(`[Analytics] Section focus updated: ${section_id}`);
       } else {
         // Insert new
         const { error: insertError } = await supabase
@@ -242,12 +301,15 @@ serve(async (req) => {
           });
 
         if (insertError) {
-          console.error('Section focus insert error:', insertError);
+          console.error('[Analytics] Section focus insert error:', insertError);
           throw insertError;
         }
+        console.log(`[Analytics] Section focus created: ${section_id}`);
       }
     }
 
+    console.log(`[Analytics] Successfully processed ${type} event`);
+    
     return new Response(
       JSON.stringify({
         ok: true,
@@ -262,13 +324,18 @@ serve(async (req) => {
         },
       }),
       {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
-    console.error('Analytics collection error:', error);
+    console.error('[Analytics] Collection error:', error);
+    console.error('[Analytics] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Internal server error',
+        details: error instanceof Error ? error.stack : undefined
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

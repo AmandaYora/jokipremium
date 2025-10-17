@@ -1,9 +1,9 @@
 import { useEffect, useRef, useCallback } from 'react';
 
 const ANALYTICS_URL = `https://iuncnthcxlbbggzoixwq.supabase.co/functions/v1/analytics-collect`;
-// NOTE: Update this key to match the ANALYTICS_KEY secret in Supabase
-// This is a simple protection mechanism, not meant to be a highly secure secret
-const ANALYTICS_KEY = 'your_analytics_key_here';
+// This key must match the ANALYTICS_KEY secret in Supabase
+// It's a simple protection mechanism to prevent spam
+const ANALYTICS_KEY = 'lovable_analytics_2025_v1';
 
 interface AnalyticsEvent {
   type: 'pageview' | 'section_focus';
