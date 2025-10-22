@@ -55,11 +55,18 @@ const Users = () => {
 
       if (error) throw error;
 
-      // Fetch emails from auth.users
+      // Fetch emails from auth.users via Edge Function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
       const profilesWithEmails = await Promise.all(
         (profilesData || []).map(async (profile) => {
-          const { data: { user } } = await supabase.auth.admin.getUserById(profile.user_id);
-          return { ...profile, email: user?.email };
+          const { data, error } = await supabase.functions.invoke('admin-users', {
+            body: { action: 'getUserById', userId: profile.user_id },
+            headers: { Authorization: `Bearer ${session.access_token}` }
+          });
+          if (error) throw error;
+          return { ...profile, email: data.user?.email };
         })
       );
 
@@ -102,6 +109,9 @@ const Users = () => {
     e.preventDefault();
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
       if (editingUser) {
         // Update existing user
         const { error: updateError } = await supabase
@@ -115,12 +125,16 @@ const Users = () => {
 
         if (updateError) throw updateError;
 
-        // Update password if provided
+        // Update password if provided via Edge Function
         if (formData.password) {
-          const { error: passwordError } = await supabase.auth.admin.updateUserById(
-            editingUser.user_id,
-            { password: formData.password }
-          );
+          const { error: passwordError } = await supabase.functions.invoke('admin-users', {
+            body: {
+              action: 'updateUserById',
+              userId: editingUser.user_id,
+              updates: { password: formData.password }
+            },
+            headers: { Authorization: `Bearer ${session.access_token}` }
+          });
           if (passwordError) throw passwordError;
         }
 
@@ -129,29 +143,22 @@ const Users = () => {
           description: 'User updated successfully',
         });
       } else {
-        // Create new user
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: formData.email,
-          password: formData.password,
-          email_confirm: true,
-          user_metadata: {
-            name: formData.name,
-            phone: formData.phone,
-            username: formData.username,
+        // Create new user via Edge Function
+        const { data, error: authError } = await supabase.functions.invoke('admin-users', {
+          body: {
+            action: 'createUser',
+            email: formData.email,
+            password: formData.password,
+            userData: {
+              name: formData.name,
+              phone: formData.phone,
+              username: formData.username,
+            }
           },
+          headers: { Authorization: `Bearer ${session.access_token}` }
         });
 
         if (authError) throw authError;
-
-        // Add admin role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: 'admin',
-          });
-
-        if (roleError) throw roleError;
 
         toast({
           title: 'Success',
@@ -174,7 +181,13 @@ const Users = () => {
     if (!userToDelete) return;
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userToDelete.user_id);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const { error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'deleteUser', userId: userToDelete.user_id },
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
       if (error) throw error;
 
       toast({

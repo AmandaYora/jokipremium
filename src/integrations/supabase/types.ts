@@ -14,136 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      analytics_pageviews: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_precise: boolean | null
-          location_source: string | null
-          path: string
-          referrer: string | null
-          session_id: string | null
-          utm_campaign: string | null
-          utm_medium: string | null
-          utm_source: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_precise?: boolean | null
-          location_source?: string | null
-          path: string
-          referrer?: string | null
-          session_id?: string | null
-          utm_campaign?: string | null
-          utm_medium?: string | null
-          utm_source?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_precise?: boolean | null
-          location_source?: string | null
-          path?: string
-          referrer?: string | null
-          session_id?: string | null
-          utm_campaign?: string | null
-          utm_medium?: string | null
-          utm_source?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "analytics_pageviews_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "analytics_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      analytics_section_focus: {
-        Row: {
-          created_at: string | null
-          focus_date: string
-          focus_ms: number
-          id: string
-          samples: number
-          section_id: string
-          session_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          focus_date?: string
-          focus_ms: number
-          id?: string
-          samples?: number
-          section_id: string
-          session_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          focus_date?: string
-          focus_ms?: number
-          id?: string
-          samples?: number
-          section_id?: string
-          session_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "analytics_section_focus_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "analytics_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      analytics_sessions: {
-        Row: {
-          city: string | null
-          country: string | null
-          created_at: string | null
-          id: string
-          is_precise: boolean | null
-          latitude: number | null
-          location_source: string | null
-          longitude: number | null
-          network_prefix: string | null
-          region: string | null
-          user_agent: string | null
-          visitor_id: string
-        }
-        Insert: {
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          id?: string
-          is_precise?: boolean | null
-          latitude?: number | null
-          location_source?: string | null
-          longitude?: number | null
-          network_prefix?: string | null
-          region?: string | null
-          user_agent?: string | null
-          visitor_id: string
-        }
-        Update: {
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          id?: string
-          is_precise?: boolean | null
-          latitude?: number | null
-          location_source?: string | null
-          longitude?: number | null
-          network_prefix?: string | null
-          region?: string | null
-          user_agent?: string | null
-          visitor_id?: string
-        }
-        Relationships: []
-      }
       orders: {
         Row: {
           created_at: string | null
@@ -228,6 +98,36 @@ export type Database = {
           key?: string
           updated_at?: string | null
           value?: string
+        }
+        Relationships: []
+      }
+      settings_audit: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          key_name: string
+          new_value: string | null
+          old_value: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          key_name: string
+          new_value?: string | null
+          old_value?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          key_name?: string
+          new_value?: string | null
+          old_value?: string | null
+          user_id?: string
         }
         Relationships: []
       }

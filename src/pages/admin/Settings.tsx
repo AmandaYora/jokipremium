@@ -1,18 +1,77 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Save } from 'lucide-react';
+import { SettingRow } from '@/components/admin/SettingRow';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, Shield, Database, MapPin, Link as LinkIcon } from 'lucide-react';
+
+interface Setting {
+  key: string;
+  value: string;
+  is_sensitive: boolean;
+}
+
+const SETTING_CATEGORIES = {
+  supabase: {
+    title: 'Supabase Configuration',
+    icon: Database,
+    settings: [
+      {
+        key: 'SUPABASE_URL',
+        description: 'Base project URL for all Supabase API and function calls',
+      },
+      {
+        key: 'SUPABASE_ANON_KEY',
+        description: 'Public anon key used by frontend (safe to expose)',
+      },
+      {
+        key: 'SUPABASE_SERVICE_ROLE_KEY',
+        description: 'Privileged service role key (NEVER expose client-side)',
+      },
+    ],
+  },
+  geolocation: {
+    title: 'IP Geolocation',
+    icon: MapPin,
+    settings: [
+      {
+        key: 'IP_GEO_PROVIDER',
+        description: 'IP geolocation provider name (e.g., ipdata)',
+      },
+      {
+        key: 'IP_GEO_API_KEY',
+        description: 'API key from ipdata.co (server-side only)',
+      },
+      {
+        key: 'IP_GEO_TIMEOUT_MS',
+        description: 'Request timeout in milliseconds (default: 3000)',
+      },
+    ],
+  },
+  social: {
+    title: 'Social Media Links',
+    icon: LinkIcon,
+    settings: [
+      {
+        key: 'whatsapp_number',
+        description: 'WhatsApp number for contact form (format: 628xxxxxxxxxx)',
+      },
+      {
+        key: 'instagram_url',
+        description: 'Instagram profile URL',
+      },
+      {
+        key: 'tiktok_url',
+        description: 'TikTok profile URL',
+      },
+    ],
+  },
+};
 
 const Settings = () => {
-  const [settings, setSettings] = useState({
-    whatsapp_number: '',
-    instagram_url: '',
-    tiktok_url: '',
-  });
+  const [settings, setSettings] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -22,27 +81,18 @@ const Settings = () => {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('key, value')
-        .in('key', ['whatsapp_number', 'instagram_url', 'tiktok_url']);
+      const { data, error } = await supabase.functions.invoke('settings-manager', {
+        body: { action: 'get_settings' },
+      });
 
       if (error) throw error;
 
-      const settingsObj: any = {};
-      data?.forEach((item) => {
-        settingsObj[item.key] = item.value;
-      });
-
-      setSettings({
-        whatsapp_number: settingsObj.whatsapp_number || '',
-        instagram_url: settingsObj.instagram_url || '',
-        tiktok_url: settingsObj.tiktok_url || '',
-      });
+      setSettings(data.settings || []);
     } catch (error: any) {
+      console.error('Error fetching settings:', error);
       toast({
         title: 'Error',
-        description: error.message,
+        description: error.message || 'Failed to load settings',
         variant: 'destructive',
       });
     } finally {
@@ -50,42 +100,68 @@ const Settings = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-
+  const handleReveal = async (key: string): Promise<string> => {
     try {
-      // Update each setting
-      for (const [key, value] of Object.entries(settings)) {
-        const { error } = await supabase
-          .from('settings')
-          .update({ value })
-          .eq('key', key);
-
-        if (error) throw error;
-      }
-
-      toast({
-        title: 'Success',
-        description: 'Settings updated successfully',
+      const { data, error } = await supabase.functions.invoke('settings-manager', {
+        body: { action: 'reveal_value', key_name: key },
       });
+
+      if (error) throw error;
+
+      return data.value;
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message,
+        description: error.message || 'Failed to reveal value',
         variant: 'destructive',
       });
-    } finally {
-      setSaving(false);
+      throw error;
     }
+  };
+
+  const handleUpdate = async (key: string, value: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('settings-manager', {
+        body: { action: 'update_setting', key_name: key, key_value: value },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `${key} updated successfully`,
+      });
+
+      // Refresh settings
+      await fetchSettings();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update setting',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
+  const getSettingValue = (key: string) => {
+    const setting = settings.find(s => s.key === key);
+    return setting?.value || '';
+  };
+
+  const getSettingSensitive = (key: string) => {
+    const setting = settings.find(s => s.key === key);
+    return setting?.is_sensitive || false;
   };
 
   if (loading) {
     return (
       <AdminLayout>
-        <div className="animate-pulse space-y-4">
-          <div className="h-10 bg-muted rounded w-1/4"></div>
-          <div className="h-96 bg-muted rounded"></div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p className="text-muted-foreground">Loading settings...</p>
+          </div>
         </div>
       </AdminLayout>
     );
@@ -93,61 +169,58 @@ const Settings = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6 max-w-4xl">
         <div>
-          <h1 className="text-3xl font-bold text-gradient mb-2">Settings</h1>
+          <h1 className="text-3xl font-bold text-gradient mb-2">System Settings</h1>
           <p className="text-muted-foreground">
-            Manage application settings and social media links
+            Manage environment configuration keys and application settings
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-card rounded-xl border border-border p-6 space-y-6">
-          <div>
-            <label className="block text-sm font-semibold mb-2">
-              WhatsApp Number
-              <span className="text-muted-foreground font-normal ml-2">
-                (Format: 628xxxxxxxxxx)
-              </span>
-            </label>
-            <input
-              type="text"
-              value={settings.whatsapp_number}
-              onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
-              className="form-input"
-              placeholder="6285173471146"
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              This number will be used in the contact form on the landing page
-            </p>
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Shield className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+            <div className="space-y-1">
+              <h3 className="font-semibold text-sm text-destructive">Security Notice</h3>
+              <p className="text-xs text-muted-foreground">
+                Sensitive values are encrypted before storage. All changes are logged in the audit trail.
+                Never share sensitive keys or expose them client-side.
+              </p>
+            </div>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-semibold mb-2">Instagram URL</label>
-            <input
-              type="url"
-              value={settings.instagram_url}
-              onChange={(e) => setSettings({ ...settings, instagram_url: e.target.value })}
-              className="form-input"
-              placeholder="https://www.instagram.com/jokipremium"
-            />
-          </div>
+        <Tabs defaultValue="supabase" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            {Object.entries(SETTING_CATEGORIES).map(([key, category]) => {
+              const Icon = category.icon;
+              return (
+                <TabsTrigger key={key} value={key} className="gap-2">
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{category.title}</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-          <div>
-            <label className="block text-sm font-semibold mb-2">TikTok URL</label>
-            <input
-              type="url"
-              value={settings.tiktok_url}
-              onChange={(e) => setSettings({ ...settings, tiktok_url: e.target.value })}
-              className="form-input"
-              placeholder="https://www.tiktok.com/@jokipremium"
-            />
-          </div>
-
-          <Button type="submit" variant="hero" disabled={saving} className="w-full sm:w-auto">
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? 'Saving...' : 'Save Settings'}
-          </Button>
-        </form>
+          {Object.entries(SETTING_CATEGORIES).map(([categoryKey, category]) => (
+            <TabsContent key={categoryKey} value={categoryKey} className="space-y-4">
+              <div className="space-y-3">
+                {category.settings.map((setting) => (
+                  <SettingRow
+                    key={setting.key}
+                    keyName={setting.key}
+                    value={getSettingValue(setting.key)}
+                    isSensitive={getSettingSensitive(setting.key)}
+                    description={setting.description}
+                    onReveal={handleReveal}
+                    onUpdate={handleUpdate}
+                  />
+                ))}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
     </AdminLayout>
   );

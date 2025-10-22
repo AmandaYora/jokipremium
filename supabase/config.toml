@@ -1,4 +1,7 @@
 project_id = "iuncnthcxlbbggzoixwq"
 
-[functions.analytics-collect]
+[functions.admin-users]
 verify_jwt = false
+
+[functions.settings-manager]
+verify_jwt = true

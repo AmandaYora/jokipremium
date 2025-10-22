@@ -11,7 +11,6 @@ import Dashboard from "./pages/admin/Dashboard";
 import Users from "./pages/admin/Users";
 import Orders from "./pages/admin/Orders";
 import Settings from "./pages/admin/Settings";
-import Tracking from "./pages/admin/Tracking";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +27,6 @@ const App = () => (
             <Route path="/admin/dashboard" element={<Dashboard />} />
             <Route path="/admin/users" element={<Users />} />
             <Route path="/admin/orders" element={<Orders />} />
-            <Route path="/admin/tracking" element={<Tracking />} />
             <Route path="/admin/settings" element={<Settings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
