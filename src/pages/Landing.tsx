@@ -7,6 +7,7 @@ import WhyUs from '../components/sections/WhyUs';
 import FAQ from '../components/sections/FAQ';
 import OrderForm from '../components/sections/OrderForm';
 import Footer from '../components/sections/Footer';
+import MinjoChat from '../components/ui/MinjoChat';
 
 const Landing = () => {
 
@@ -137,6 +138,7 @@ const Landing = () => {
         <OrderForm />
       </main>
       <Footer />
+      <MinjoChat />
     </div>
   );
 };
