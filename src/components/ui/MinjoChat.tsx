@@ -194,12 +194,19 @@ const MinjoChat = () => {
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10">
             <MessageCircle className="h-5 w-5" />
           </span>
-          <span>Minjo</span>
-        </div>
-      </button>
+      <span>Minjo</span>
+    </div>
+  </button>
 
-      {isOpen && (
-        <div
+  <div
+    aria-hidden="true"
+    className={`fixed inset-0 z-[85] bg-background/70 transition-opacity duration-300 pointer-events-none ${
+      isOpen ? "opacity-100 backdrop-blur-sm" : "opacity-0"
+    }`}
+  />
+
+  {isOpen && (
+    <div
           className="fixed z-[90] bottom-24 right-6 w-[22rem] max-h-[70vh] rounded-3xl border border-border/60 bg-card/90 backdrop-blur-xl shadow-brand transition-smooth overflow-hidden
             max-sm:right-3 max-sm:left-3 max-sm:bottom-24 max-sm:w-auto"
         >
