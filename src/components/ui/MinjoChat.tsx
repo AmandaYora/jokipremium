@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { MessageCircle, X } from "lucide-react";
 
 type ChatRole = "user" | "assistant" | "system";
@@ -44,6 +44,9 @@ const MinjoChat = () => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const bottomMarkerRef = useRef<HTMLDivElement | null>(null);
+  const hasAutoScrolledRef = useRef(false);
 
   const fallbackSessionId = useMemo(() => {
     const today = formatDate(new Date());
@@ -155,6 +158,28 @@ const MinjoChat = () => {
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) {
+      hasAutoScrolledRef.current = false;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const behavior: ScrollBehavior = hasAutoScrolledRef.current ? "smooth" : "auto";
+    const marker = bottomMarkerRef.current;
+
+    if (marker) {
+      requestAnimationFrame(() => {
+        marker.scrollIntoView({ behavior, block: "end" });
+      });
+      hasAutoScrolledRef.current = true;
+    }
+  }, [messages, isLoading, isOpen]);
+
   return (
     <>
       <button
@@ -195,7 +220,10 @@ const MinjoChat = () => {
             </button>
           </header>
 
-          <div className="flex flex-col gap-2 px-4 py-4 overflow-y-auto max-h-[45vh]">
+          <div
+            ref={scrollContainerRef}
+            className="flex flex-col gap-2 px-4 py-4 overflow-y-auto max-h-[45vh] scroll-smooth minjo-scrollbar"
+          >
             {messages.map((message) =>
               message.segments.map((segment, index) => (
                 <div
@@ -226,6 +254,7 @@ const MinjoChat = () => {
                 </div>
               </div>
             )}
+            <div ref={bottomMarkerRef} />
           </div>
 
           <div className="border-t border-border/50 bg-card/80 px-4 py-3">

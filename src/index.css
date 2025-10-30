@@ -176,6 +176,30 @@
   .glow {
     filter: drop-shadow(0 0 20px hsl(var(--jp-cyan) / 0.5));
   }
+
+  .minjo-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--jp-cyan)) hsl(var(--jp-dark) / 0.6);
+  }
+
+  .minjo-scrollbar::-webkit-scrollbar {
+    width: 0.6rem;
+  }
+
+  .minjo-scrollbar::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, hsl(var(--jp-dark) / 0.4), hsl(var(--jp-deep)));
+    border-radius: 999px;
+  }
+
+  .minjo-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(var(--jp-cyan)), hsl(var(--jp-blue)));
+    border-radius: 999px;
+    box-shadow: 0 0 0 1px hsl(var(--jp-deep) / 0.5);
+  }
+
+  .minjo-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(var(--jp-green)), hsl(var(--jp-cyan)));
+  }
 }
 
 @layer components {
