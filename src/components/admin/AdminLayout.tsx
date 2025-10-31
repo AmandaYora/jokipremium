@@ -2,14 +2,15 @@ import { ReactNode, useEffect } from 'react';
 import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { 
-  LayoutDashboard, 
-  Users, 
-  ShoppingCart, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  ShoppingCart,
+  Settings,
   LogOut,
   Menu,
-  X
+  X,
+  MessageSquare,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -48,6 +49,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+    { icon: MessageSquare, label: 'Sesi AI Chat', path: '/admin/sessions' },
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: ShoppingCart, label: 'Orders', path: '/admin/orders' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
