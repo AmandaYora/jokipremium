@@ -10,32 +10,32 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     proxy: {
       "/api/minjo": {
-        target: "https://jokipremium-ai-serverless-kphz1pnpl-amandas-projects-9da91613.vercel.app",
+        target: "https://jokipremium-ai-serverless.vercel.app",
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api\/minjo/, "/chat"),
+        rewrite: (path) => path.replace(/^\/api\/minjo/, "/api/chat"),
       },
       "/api/sessions": {
-        target: "https://jokipremium-ai-serverless-kphz1pnpl-amandas-projects-9da91613.vercel.app",
+        target: "https://jokipremium-ai-serverless.vercel.app",
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api\/sessions/, "/sessions"),
+        rewrite: (path) => path.replace(/^\/api\/sessions/, "/api/sessions"),
       },
     },
   },
   preview: {
     proxy: {
       "/api/minjo": {
-        target: "https://jokipremium-ai-serverless-kphz1pnpl-amandas-projects-9da91613.vercel.app",
+        target: "https://jokipremium-ai-serverless.vercel.app",
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api\/minjo/, "/chat"),
+        rewrite: (path) => path.replace(/^\/api\/minjo/, "/api/chat"),
       },
       "/api/sessions": {
-        target: "https://jokipremium-ai-serverless-kphz1pnpl-amandas-projects-9da91613.vercel.app",
+        target: "https://jokipremium-ai-serverless.vercel.app",
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api\/sessions/, "/sessions"),
+        rewrite: (path) => path.replace(/^\/api\/sessions/, "/api/sessions"),
       },
     },
   },

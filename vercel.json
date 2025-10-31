@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/minjo",
-      "destination": "https://jokipremium-ai-serverless-kphz1pnpl-amandas-projects-9da91613.vercel.app/chat"
+      "destination": "https://jokipremium-ai-serverless.vercel.app/api/chat"
     },
     {
       "source": "/api/sessions",
-      "destination": "https://jokipremium-ai-serverless-kphz1pnpl-amandas-projects-9da91613.vercel.app/sessions"
+      "destination": "https://jokipremium-ai-serverless.vercel.app/api/sessions"
     }
   ]
 }
