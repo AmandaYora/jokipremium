@@ -15,6 +15,12 @@ export default defineConfig(({ mode }) => ({
         secure: true,
         rewrite: (path) => path.replace(/^\/api\/minjo/, "/chat"),
       },
+      "/api/sessions": {
+        target: "https://jokipremium-ai-serverless-kphz1pnpl-amandas-projects-9da91613.vercel.app",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/sessions/, "/sessions"),
+      },
     },
   },
   preview: {
@@ -24,6 +30,12 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         secure: true,
         rewrite: (path) => path.replace(/^\/api\/minjo/, "/chat"),
+      },
+      "/api/sessions": {
+        target: "https://jokipremium-ai-serverless-kphz1pnpl-amandas-projects-9da91613.vercel.app",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/sessions/, "/sessions"),
       },
     },
   },

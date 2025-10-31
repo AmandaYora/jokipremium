@@ -34,7 +34,25 @@ const resolveSessionsEndpoint = () => {
     const normalized = userDefined.replace(/\/+$/, "");
     return normalized.endsWith("/sessions") ? normalized : `${normalized}/sessions`;
   }
-  return "/sessions";
+  // Default ke /api/sessions yang akan di-proxy ke AI backend
+  return "/api/sessions";
+};
+
+const SNIPPET_WORD_LIMIT = 25;
+
+const parseJsonResponse = <T,>(rawPayload: string): T => {
+  try {
+    return JSON.parse(rawPayload) as T;
+  } catch (error) {
+    const snippet = rawPayload
+      .replace(/[\r\n]+/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, SNIPPET_WORD_LIMIT)
+      .join(" ");
+    console.error("Sessions API returned non-JSON payload snippet:", snippet, error);
+    throw new Error("Server mengembalikan format tidak valid untuk data sesi.");
+  }
 };
 
 const Sessions = () => {
@@ -62,7 +80,8 @@ const Sessions = () => {
         throw new Error(`Gagal memuat sesi (status ${response.status})`);
       }
 
-      const data = (await response.json()) as SessionsResponse;
+      const rawPayload = await response.text();
+      const data = parseJsonResponse<SessionsResponse>(rawPayload);
       if (!data.ok || !Array.isArray(data.sessions)) {
         throw new Error("Format data sesi tidak valid");
       }
@@ -130,7 +149,8 @@ const Sessions = () => {
         throw new Error(`Gagal menghapus sesi (status ${response.status})`);
       }
 
-      const result = (await response.json()) as DeleteResponse;
+      const rawPayload = await response.text();
+      const result = parseJsonResponse<DeleteResponse>(rawPayload);
 
       const deletedIds = Array.isArray(result.deleted) ? result.deleted : [];
       const missingIds = Array.isArray(result.missing) ? result.missing : [];

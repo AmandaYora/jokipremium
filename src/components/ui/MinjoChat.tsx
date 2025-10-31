@@ -313,9 +313,24 @@ const MinjoChat = () => {
         throw new Error(`Status ${response.status}`);
       }
 
-      const data = (await response.json()) as { ok?: boolean; answer?: string };
+      const rawPayload = await response.text();
+      let data: { ok?: boolean; answer?: string; error?: string };
+
+      try {
+        data = JSON.parse(rawPayload) as { ok?: boolean; answer?: string; error?: string };
+      } catch {
+        const snippet = rawPayload
+          .replace(/[\r\n]+/g, " ")
+          .split(" ")
+          .filter(Boolean)
+          .slice(0, 30)
+          .join(" ");
+        console.error("MinjoChat received non-JSON response snippet:", snippet);
+        throw new Error("Server mengembalikan format tidak valid. Silakan coba lagi sebentar lagi.");
+      }
+
       if (!data?.ok || typeof data.answer !== "string") {
-        throw new Error("Format respons tidak valid");
+        throw new Error(data?.error || "Format respons tidak valid");
       }
 
       const segments = createSegments(data.answer);
@@ -327,11 +342,16 @@ const MinjoChat = () => {
           : ["Minjo belum menerima jawaban dari server. Coba lagi sebentar lagi, ya."],
       });
     } catch (error) {
+      console.error("MinjoChat fetch error:", error);
+      const fallbackMessage =
+        error instanceof Error
+          ? error.message
+          : "Maaf, Minjo mengalami kendala koneksi. Silakan coba lagi sebentar lagi.";
       pushMessage({
         id: generateId(),
         role: "assistant",
         segments: [
-          "Maaf, Minjo mengalami kendala koneksi. Silakan coba lagi sebentar lagi.",
+          fallbackMessage,
         ],
         variant: "error",
       });
