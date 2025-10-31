@@ -17,10 +17,85 @@ const CHAT_ENDPOINT =
 
 const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
+const shouldDropToken = (token: string) => {
+  if (!token) {
+    return true;
+  }
+
+  if (/^[-=_]{3,}$/.test(token)) {
+    return true;
+  }
+
+  const letters = token.replace(/[^A-Za-z]/g, "");
+  const digits = token.replace(/[^0-9]/g, "");
+  const punctuationCount = token.length - letters.length - digits.length;
+
+  if (letters.length === 0 && digits.length === 0) {
+    return true;
+  }
+
+  if (punctuationCount >= 2 && letters.length <= 2 && digits.length === 0) {
+    if (/[.+]/.test(token) && letters.length > 0) {
+      return false;
+    }
+
+    if (token.includes("++")) {
+      return false;
+    }
+
+    if (/[~`^<>]/.test(token)) {
+      return true;
+    }
+
+    return true;
+  }
+
+  return false;
+};
+
+const sanitizeLine = (line: string) => {
+  const withoutControl = line.replace(/[\u0000-\u001F\u007F-\u009F]/g, "").trim();
+  if (!withoutControl) {
+    return "";
+  }
+
+  const prefixMatch = withoutControl.match(/^(\d+\.\s+|[-*]\s+)/);
+  let prefix = "";
+  let content = withoutControl;
+
+  if (prefixMatch) {
+    prefix = prefixMatch[1];
+    content = withoutControl.slice(prefix.length);
+  }
+
+  const sanitizedContent = content
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => !shouldDropToken(token))
+    .join(" ")
+    .trim();
+
+  if (!sanitizedContent) {
+    return "";
+  }
+
+  return `${prefix}${sanitizedContent}`.trim();
+};
+
+const sanitizeSegment = (segment: string) => {
+  const normalized = segment.replace(/\r\n/g, "\n");
+  const sanitizedLines = normalized
+    .split("\n")
+    .map(sanitizeLine)
+    .filter((line) => line.length > 0);
+
+  return sanitizedLines.join("\n").trim();
+};
+
 const createSegments = (raw: string) =>
   raw
-    .split("\n\n")
-    .map((segment) => segment.trim())
+    .split(/\n\s*\n/)
+    .map((segment) => sanitizeSegment(segment.trim()))
     .filter(Boolean);
 
 const generateId = () => {
@@ -30,11 +105,54 @@ const generateId = () => {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
-const renderSegmentContent = (segment: string): React.ReactNode => {
+const renderInlineContent = (text: string, keyPrefix: string): React.ReactNode => {
+  const boldRegex = /\*\*(.+?)\*\*/g;
+  const parts: Array<string | React.ReactElement> = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let matchIndex = 0;
+
+  while ((match = boldRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    parts.push(
+      <strong key={`${keyPrefix}-bold-${matchIndex}`} className="font-semibold">
+        {match[1]}
+      </strong>
+    );
+
+    lastIndex = match.index + match[0].length;
+    matchIndex += 1;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  if (parts.length === 0) {
+    return text;
+  }
+
+  return parts.map((part, index) =>
+    typeof part === "string" ? (
+      <React.Fragment key={`${keyPrefix}-text-${index}`}>{part}</React.Fragment>
+    ) : (
+      part
+    )
+  );
+};
+
+const renderSegmentContent = (segment: string, keyPrefix: string): React.ReactNode => {
   const lines = segment
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+
+  if (lines.length === 0) {
+    return null;
+  }
 
   if (lines.length === 0) {
     return null;
@@ -53,7 +171,7 @@ const renderSegmentContent = (segment: string): React.ReactNode => {
           const cleanedLine = line.replace(/^\d+\.\s+/, "").replace(/^[-*]\s+/, "");
           return (
             <li key={`${line}-${index}`} className="text-current">
-              {cleanedLine}
+              {renderInlineContent(cleanedLine, `${keyPrefix}-list-${index}`)}
             </li>
           );
         })}
@@ -64,16 +182,19 @@ const renderSegmentContent = (segment: string): React.ReactNode => {
   if (lines.length > 1) {
     return (
       <div className="space-y-2 text-left">
-        {lines.map((line, index) => (
-          <p key={`${line}-${index}`} className="text-current">
-            {line}
-          </p>
-        ))}
+        {lines.map((line, index) => {
+          const inlineContent = renderInlineContent(line, `${keyPrefix}-paragraph-${index}`);
+          return (
+            <p key={`${line}-${index}`} className="text-current">
+              {inlineContent}
+            </p>
+          );
+        })}
       </div>
     );
   }
 
-  return <span>{lines[0]}</span>;
+  return <span>{renderInlineContent(lines[0], `${keyPrefix}-single`)}</span>;
 };
 
 const TypingIndicator = () => (
@@ -295,7 +416,7 @@ const MinjoChat = () => {
           >
             {messages.map((message) =>
               message.segments.map((segment, index) => {
-                const content = renderSegmentContent(segment);
+                const content = renderSegmentContent(segment, `${message.id}-${index}`);
 
                 if (!content) {
                   return null;
