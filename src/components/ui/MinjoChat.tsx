@@ -30,6 +30,67 @@ const generateId = () => {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
+const renderSegmentContent = (segment: string): React.ReactNode => {
+  const lines = segment
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) {
+    return null;
+  }
+
+  const isNumberedList = lines.length > 1 && lines.every((line) => /^\d+\.\s+/.test(line));
+  const isBulletedList = lines.length > 1 && lines.every((line) => /^[-*]\s+/.test(line));
+
+  if (isNumberedList || isBulletedList) {
+    const ListTag = (isNumberedList ? "ol" : "ul") as "ol" | "ul";
+    const listClassName = isNumberedList ? "list-decimal" : "list-disc";
+
+    return (
+      <ListTag className={`space-y-2 ${listClassName} pl-5 text-left`}>
+        {lines.map((line, index) => {
+          const cleanedLine = line.replace(/^\d+\.\s+/, "").replace(/^[-*]\s+/, "");
+          return (
+            <li key={`${line}-${index}`} className="text-current">
+              {cleanedLine}
+            </li>
+          );
+        })}
+      </ListTag>
+    );
+  }
+
+  if (lines.length > 1) {
+    return (
+      <div className="space-y-2 text-left">
+        {lines.map((line, index) => (
+          <p key={`${line}-${index}`} className="text-current">
+            {line}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
+  return <span>{lines[0]}</span>;
+};
+
+const TypingIndicator = () => (
+  <div className="flex items-center gap-2" role="status" aria-live="polite">
+    <span className="sr-only">Minjo sedang menulis...</span>
+    <div className="flex items-center gap-1" aria-hidden="true">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <span
+          key={index}
+          className="h-2.5 w-2.5 rounded-full bg-muted-foreground/80 animate-bounce"
+          style={{ animationDelay: `${index * 0.2}s`, animationDuration: "1s" }}
+        />
+      ))}
+    </div>
+  </div>
+);
+
 const MinjoChat = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
@@ -207,8 +268,8 @@ const MinjoChat = () => {
 
   {isOpen && (
     <div
-          className="fixed z-[90] bottom-24 right-6 w-[22rem] max-h-[70vh] rounded-3xl border border-border/60 bg-card/90 backdrop-blur-xl shadow-brand transition-smooth overflow-hidden
-            max-sm:right-3 max-sm:left-3 max-sm:bottom-24 max-sm:w-auto"
+          className="fixed z-[90] bottom-24 right-6 w-[22rem] min-h-[26rem] max-h-[80vh] rounded-3xl border border-border/60 bg-card/90 backdrop-blur-xl shadow-brand transition-smooth overflow-hidden
+            max-sm:right-3 max-sm:left-3 max-sm:bottom-20 max-sm:w-auto max-sm:h-[80vh] max-sm:max-h-[80vh]"
         >
           <header className="flex items-center justify-between px-4 py-3 bg-gradient-brand text-foreground">
             <div>
@@ -229,35 +290,44 @@ const MinjoChat = () => {
 
           <div
             ref={scrollContainerRef}
-            className="flex flex-col gap-2 px-4 py-4 overflow-y-auto max-h-[45vh] scroll-smooth minjo-scrollbar"
+            className="flex flex-col gap-3 px-4 py-5 overflow-y-auto max-h-[60vh] scroll-smooth min-h-[18rem] minjo-scrollbar
+              max-sm:max-h-[55vh]"
           >
             {messages.map((message) =>
-              message.segments.map((segment, index) => (
-                <div
-                  key={`${message.id}-${index}`}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
+              message.segments.map((segment, index) => {
+                const content = renderSegmentContent(segment);
+
+                if (!content) {
+                  return null;
+                }
+
+                return (
                   <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-card ${
-                      message.role === "user"
-                        ? "bg-gradient-brand text-foreground"
-                        : message.variant === "error"
-                        ? "bg-destructive/10 text-destructive"
-                        : "bg-muted/40 text-foreground"
+                    key={`${message.id}-${index}`}
+                    className={`flex ${
+                      message.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {segment}
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-3 text-left text-sm leading-relaxed shadow-card ${
+                        message.role === "user"
+                          ? "bg-gradient-brand text-foreground"
+                          : message.variant === "error"
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-muted/40 text-foreground"
+                      }`}
+                    >
+                      {content}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
 
             {isLoading && (
               <div className="flex justify-start">
                 <div className="max-w-[70%] rounded-2xl px-4 py-3 text-sm bg-muted/40 text-muted-foreground shadow-card">
-                  Minjo sedang menulis...
+                  <TypingIndicator />
                 </div>
               </div>
             )}
